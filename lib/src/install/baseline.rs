@@ -256,8 +256,17 @@ pub(crate) fn install_create_rootfs(
             "reserved",
             Some("8DA63339-0007-60C0-C436-083AC8230908"),
         );
+    } else if cfg!(target_arch = "powerpc64") {
+        // BIOS-BOOT
+        sgdisk_partition(
+            &mut sgdisk.cmd,
+            1,
+            "0:+1M",
+            "BIOS-BOOT",
+            Some("21686148-6449-6E6F-744E-656564454649"),
+        );
     } else {
-        anyhow::bail!("Unsupported architecture: {}", std::env::consts::ARCH);
+        anyhow::bail!("UNSUPPORTED architecture: {}", std::env::consts::ARCH);
     }
 
     let esp_partno = if super::ARCH_USES_EFI {
