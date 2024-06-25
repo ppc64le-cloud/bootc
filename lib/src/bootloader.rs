@@ -20,7 +20,7 @@ pub(crate) fn install_via_bootupd(
         .into_iter()
         .chain(verbose)
         .chain(bootupd_opts.iter().copied().flatten())
-        .chain(["--device", device.as_str(), rootfs.as_str()]);
+        .chain(["--device", "/dev/sdb1", rootfs.as_str()]);
     Task::new("Running bootupctl to install bootloader", "bootupctl")
         .args(args)
         .verbose()

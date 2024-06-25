@@ -97,7 +97,7 @@ impl BlockSetup {
     /// Returns true if the block setup requires a separate /boot aka XBOOTLDR partition.
     pub(crate) fn requires_bootpart(&self) -> bool {
         match self {
-            BlockSetup::Direct => false,
+            BlockSetup::Direct => true,
             BlockSetup::Tpm2Luks => true,
         }
     }
@@ -261,12 +261,12 @@ pub(crate) fn install_create_rootfs(
         sgdisk_partition(
             &mut sgdisk.cmd,
             1,
-            "0:+1M",
+            "0:+4M",
             "BIOS-BOOT",
-            Some("21686148-6449-6E6F-744E-656564454649"),
+            Some("9E1A2D38-C612-4316-AA26-8B49521E5A8B"),
         );
     } else {
-        anyhow::bail!("UNSUPPORTED architecture: {}", std::env::consts::ARCH);
+        anyhow::bail!("Usupported architecture: {}", std::env::consts::ARCH);
     }
 
     let esp_partno = if super::ARCH_USES_EFI {
@@ -286,7 +286,7 @@ pub(crate) fn install_create_rootfs(
     // what systemd/uapi-group encourages and make /boot be FAT32 as well, as
     // it would aid systemd-boot.
     let use_xbootldr = block_setup.requires_bootpart();
-    let mut partno = EFIPN;
+    let mut partno = EFIPN - 1;
     if use_xbootldr {
         partno += 1;
         sgdisk_partition(
@@ -297,7 +297,7 @@ pub(crate) fn install_create_rootfs(
             None,
         );
     }
-    let rootpn = if use_xbootldr { BOOTPN + 1 } else { EFIPN + 1 };
+    let rootpn = if use_xbootldr { BOOTPN } else { EFIPN + 1 };
     let root_size = root_size
         .map(|v| Cow::Owned(format!("0:{v}M")))
         .unwrap_or_else(|| Cow::Borrowed("0:0"));
@@ -380,7 +380,7 @@ pub(crate) fn install_create_rootfs(
 
     // Initialize the /boot filesystem
     let bootdev = if use_xbootldr {
-        Some(findpart(BOOTPN)?)
+        Some(findpart(BOOTPN - 1)?)
     } else {
         None
     };
